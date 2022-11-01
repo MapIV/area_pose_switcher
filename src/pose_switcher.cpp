@@ -34,7 +34,9 @@ void PoseSwitcher::callbackGNSSPose(const geometry_msgs::PoseStamped & gnss_pose
 
 void PoseSwitcher::callbackLiDARPose(const geometry_msgs::PoseStamped & lidar_pose)
 {
-    bool publication_flag = (localization_type_data_ == "LiDAR" || localization_type_data_ == "LIDAR" || localization_type_data_ == "lidar");
+    bool publication_flag_lidar = (localization_type_data_ == "LiDAR" || localization_type_data_ == "LIDAR" || localization_type_data_ == "lidar");
+    bool publication_flag_ndt = (localization_type_data_ == "Ndt" || localization_type_data_ == "ndt" || localization_type_data_ == "NDT");
+    bool publication_flag = publication_flag_lidar || publication_flag_ndt;
     if(!publication_flag) return;
     pose_pub_.publish(lidar_pose);
 }
