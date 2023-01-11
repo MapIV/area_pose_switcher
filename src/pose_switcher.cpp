@@ -3,7 +3,7 @@
 PoseSwitcher::PoseSwitcher() : nh_(""), pnh_("")
 {
     pose_pub_ = pnh_.advertise<geometry_msgs::PoseStamped>("selected_pose", 1000);
-    current_localization_type_pub_ = pnh_.advertise<std_msgs::String>("currenc_localization_type", 1, true);
+    current_localization_type_pub_ = pnh_.advertise<std_msgs::String>("current_localization_type", 1, true);
     localization_type_sub_ = nh_.subscribe("localization_type", 1,  &PoseSwitcher::callbackLocalizationType, this);
     gnss_pose_sub_ = nh_.subscribe("gnss_pose", 1000, &PoseSwitcher::callbackGNSSPose, this);
     lidar_pose_sub_ = nh_.subscribe("lidar_pose", 1000, &PoseSwitcher::callbackLiDARPose, this);
