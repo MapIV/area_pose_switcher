@@ -53,3 +53,6 @@ rostopic pub /localization_type std_msgs/String gnss
 rostopic pub /localization_type std_msgs/String lidar
 ```
 
+## Related packages
+
+ [gnss_area_recognizer](https://github.com/MapIV/gnss_area_recognizer)
