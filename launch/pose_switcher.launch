@@ -2,7 +2,7 @@
 
 <launch>
 
-  <node pkg="pose_switcher" name="pose_switcher" type="pose_switcher" output="screen">
+  <node pkg="pose_switcher" name="pose_switcher" exec="pose_switcher" output="screen">
   </node>
 
 </launch>
