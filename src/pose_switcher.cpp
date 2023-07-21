@@ -1,42 +1,60 @@
-#include "pose_switcher/pose_switcher.h"
+#include "rclcpp/rclcpp.hpp"
+#include "geometry_msgs/msg/pose_stamped.hpp"
+#include "std_msgs/msg/string.hpp"
 
-PoseSwitcher::PoseSwitcher() : nh_(""), pnh_("")
+class PoseSwitcher : public rclcpp::Node
 {
-    pose_pub_ = pnh_.advertise<geometry_msgs::PoseStamped>("selected_pose", 1000);
-    current_localization_type_pub_ = pnh_.advertise<std_msgs::String>("current_localization_type", 1, true);
-    localization_type_sub_ = nh_.subscribe("localization_type", 1,  &PoseSwitcher::callbackLocalizationType, this);
-    gnss_pose_sub_ = nh_.subscribe("gnss_pose", 1000, &PoseSwitcher::callbackGNSSPose, this);
-    lidar_pose_sub_ = nh_.subscribe("lidar_pose", 1000, &PoseSwitcher::callbackLiDARPose, this);
+public:
+    PoseSwitcher() : Node("pose_switcher")
+    {
+        pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("selected_pose", 10);
+        current_localization_type_pub_ = this->create_publisher<std_msgs::msg::String>("current_localization_type", 10);
 
-    
-    std_msgs::String localization_type;
-    localization_type.data = localization_type_data_;
-    current_localization_type_pub_.publish(localization_type);
+        localization_type_sub_ = this->create_subscription<std_msgs::msg::String>(
+            "localization_type",
+            10,
+            [this](const std_msgs::msg::String::SharedPtr msg) {
+                RCLCPP_INFO(this->get_logger(), "localization_type has been changed: %s", msg->data.c_str());
+                localization_type_data_ = msg->data;
+                current_localization_type_pub_->publish(*msg);
+            });
 
-    ROS_INFO("localization_type: %s", localization_type.data.c_str());
+        gnss_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
+            "gnss_pose",
+            10,
+            [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg) {
+                if (localization_type_data_ == "GNSS" || localization_type_data_ == "gnss") {
+                    pose_pub_->publish(*msg);
+                }
+            });
+
+        lidar_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
+            "lidar_pose",
+            10,
+            [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg) {
+                if (localization_type_data_ == "LiDAR" || localization_type_data_ == "LIDAR" || localization_type_data_ == "lidar" ||
+                    localization_type_data_ == "Ndt" || localization_type_data_ == "ndt" || localization_type_data_ == "NDT") {
+                    pose_pub_->publish(*msg);
+                }
+            });
+
+        RCLCPP_INFO(this->get_logger(), "localization_type: %s", localization_type_data_.c_str());
+    }
+
+private:
+    rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pose_pub_;
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr current_localization_type_pub_;
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr localization_type_sub_;
+    rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr gnss_pose_sub_;
+    rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr lidar_pose_sub_;
+
+    std::string localization_type_data_;
 };
 
-PoseSwitcher::~PoseSwitcher(){};
-
-void PoseSwitcher::callbackLocalizationType(const std_msgs::String & localization_type)
+int main(int argc, char ** argv)
 {
-    ROS_INFO("localization_type has been changed: %s", localization_type.data.c_str());
-    localization_type_data_ = localization_type.data;
-    current_localization_type_pub_.publish(localization_type);
-}
-
-void PoseSwitcher::callbackGNSSPose(const geometry_msgs::PoseStamped & gnss_pose)
-{
-    bool publication_flag = (localization_type_data_ == "GNSS" || localization_type_data_ == "gnss");
-    if(!publication_flag) return;
-    pose_pub_.publish(gnss_pose);
-}
-
-void PoseSwitcher::callbackLiDARPose(const geometry_msgs::PoseStamped & lidar_pose)
-{
-    bool publication_flag_lidar = (localization_type_data_ == "LiDAR" || localization_type_data_ == "LIDAR" || localization_type_data_ == "lidar");
-    bool publication_flag_ndt = (localization_type_data_ == "Ndt" || localization_type_data_ == "ndt" || localization_type_data_ == "NDT");
-    bool publication_flag = publication_flag_lidar || publication_flag_ndt;
-    if(!publication_flag) return;
-    pose_pub_.publish(lidar_pose);
+    rclcpp::init(argc, argv);
+    rclcpp::spin(std::make_shared<PoseSwitcher>());
+    rclcpp::shutdown();
+    return 0;
 }
