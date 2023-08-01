@@ -69,11 +69,15 @@ public:
                 if(is_gnss_pose_received_) {
                     Error2dYaw error_2d_yaw;
                     if(!computeError(error_2d_yaw)) {
-                        RCLCPP_WARN(this->get_logger(), "computeError() == false");
+                        // RCLCPP_WARN(this->get_logger(), "computeError() == false");
+                        return;
+                    }
+                    if(current_localization_type_msg_.data == area_localization_type_msg_.data) {
+                        // RCLCPP_WARN(this->get_logger(), "current_localization_type_msg_.data == area_localization_type_msg_.data");
                         return;
                     }
                     if(!judgetSwitching(error_2d_yaw)) {
-                        RCLCPP_WARN(this->get_logger(), "judgetSwitching() == false");
+                        // RCLCPP_WARN(this->get_logger(), "judgetSwitching() == false");
                         return;
                     }
                     current_localization_type_msg_ = area_localization_type_msg_;
@@ -106,7 +110,8 @@ private:
     }
 
     bool judgetSwitching(const Error2dYaw& error_2d_yaw) {
-        if (error_2d_yaw.error_2d > error_2d_threshold_ ) {
+        // if (error_2d_yaw.error_2d > error_2d_threshold_ ) {
+        if (fabs(error_2d_yaw.error_2d) > error_2d_threshold_ ) {
             judge_switching_first_time_ = -1.0;
             RCLCPP_INFO(this->get_logger(), "2d error is too large");
             return false;
@@ -139,11 +144,11 @@ private:
         PoseArrayInterpolator interpolator(this, sensor_ros_time, gnss_pose_cov_msg_ptr_array_);
         if (!interpolator.is_success())
         {
-            RCLCPP_WARN(this->get_logger(), "interpolator.is_success() == false");
+            // RCLCPP_WARN(this->get_logger(), "interpolator.is_success() == false");
             return false;
         }
         if (rclcpp::Time(interpolator.get_current_pose().header.stamp).seconds() == 0.0) {
-            RCLCPP_WARN(this->get_logger(), "interpolator.get_current_pose().header.stamp == 0.0");
+            // RCLCPP_WARN(this->get_logger(), "interpolator.get_current_pose().header.stamp == 0.0");
             return false;
         }
         pop_old_pose(gnss_pose_cov_msg_ptr_array_, sensor_ros_time);
