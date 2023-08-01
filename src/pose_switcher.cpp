@@ -41,6 +41,15 @@ public:
                     is_initialized_ = true;
                 }
                 current_localization_type_pub_->publish(current_localization_type_msg_);
+
+                // Check failed switching
+                bool failed_switching = false;
+                failed_switching = ((current_localization_type_msg_.data == "gnss" && area_localization_type_msg_.data == "ndt") ||
+                                    (current_localization_type_msg_.data == "ndt" && area_localization_type_msg_.data == "gnss"));
+                if(failed_switching) {
+                    RCLCPP_WARN(this->get_logger(), "failed_switching");
+                    rclcpp::shutdown();
+                }
             });
 
         gnss_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -72,15 +81,32 @@ public:
                         // RCLCPP_WARN(this->get_logger(), "computeError() == false");
                         return;
                     }
-                    if(current_localization_type_msg_.data == area_localization_type_msg_.data) {
-                        // RCLCPP_WARN(this->get_logger(), "current_localization_type_msg_.data == area_localization_type_msg_.data");
+
+                    if(area_localization_type_msg_.data != "switching") {
+                        // RCLCPP_WARN(this->get_logger(), "area_localization_type_msg_.data != \"switching\"");
+                        is_switched_ = false;
+                        return;
+                    }
+                    if(is_switched_)
+                    {
+                        // RCLCPP_WARN(this->get_logger(), "is_switched_ == true");
                         return;
                     }
                     if(!judgetSwitching(error_2d_yaw)) {
                         // RCLCPP_WARN(this->get_logger(), "judgetSwitching() == false");
                         return;
                     }
-                    current_localization_type_msg_ = area_localization_type_msg_;
+                    else
+                    {
+                        is_switched_ = true;
+                        current_localization_type_msg_.stamp = area_localization_type_msg_.stamp;
+                       if(current_localization_type_msg_.data == "gnss") {
+                            current_localization_type_msg_.data = "ndt";
+                       }
+                       else if(current_localization_type_msg_.data == "ndt") {
+                            current_localization_type_msg_.data = "gnss";
+                       }
+                    }
                 std::cout << "-----------------" << std::endl;
                 }
 
@@ -110,7 +136,7 @@ private:
     }
 
     bool judgetSwitching(const Error2dYaw& error_2d_yaw) {
-        // if (error_2d_yaw.error_2d > error_2d_threshold_ ) {
+
         if (fabs(error_2d_yaw.error_2d) > error_2d_threshold_ ) {
             judge_switching_first_time_ = -1.0;
             RCLCPP_INFO(this->get_logger(), "2d error is too large");
@@ -135,7 +161,7 @@ private:
         }
         return false;
     }
-    // void computeError() {
+
     bool computeError(Error2dYaw& error_2d_yaw) {
         rclcpp::Time sensor_ros_time =  lidar_pose_msg_ptr_->header.stamp;
         if (gnss_pose_cov_msg_ptr_array_.size() <= 1) {
@@ -165,11 +191,11 @@ private:
         while (error_yaw > M_PI) error_yaw -= 2.0 * M_PI;
         while (error_yaw < -M_PI) error_yaw += 2.0 * M_PI;
 
-        std::cout << "time: " << std::fixed << std::setprecision(9) << rclcpp::Time(sensor_ros_time).seconds() << std::endl;
+        // std::cout << "time: " << std::fixed << std::setprecision(9) << rclcpp::Time(sensor_ros_time).seconds() << std::endl;
         // std::cout << "gnss x y: " << std::fixed << std::setprecision(9) << gnss_pose.position.x << " " << gnss_pose.position.y << std::endl;
         // std::cout << "lidar x y: " << std::fixed << std::setprecision(9) << lidar_pose.position.x << " " << lidar_pose.position.y << std::endl;
-        std::cout << "error_2d: " << error_2d << std::endl;
-        std::cout << "error_yaw: " << error_yaw * 180.0 / M_PI << std::endl;
+        // std::cout << "error_2d: " << error_2d << std::endl;
+        // std::cout << "error_yaw: " << error_yaw * 180.0 / M_PI << std::endl;
 
         tier4_debug_msgs::msg::Float32Stamped error_2d_msg;
         error_2d_msg.stamp = sensor_ros_time;
@@ -212,7 +238,7 @@ private:
 
     bool is_initialized_ = false;
 
-
+    bool is_switched_ = false;
 };
 
 int main(int argc, char ** argv)
