@@ -5,7 +5,7 @@
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2/LinearMath/Matrix3x3.h"
 #include "tier4_debug_msgs/msg/float32_stamped.hpp"
-#include "tier4_debug_msgs/msg/string_stamped.hpp"
+#include "tier4_localization_msgs/msg/localization_type_stamped.hpp"
 
 #include <deque>
 
@@ -29,12 +29,12 @@ public:
         pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("selected_pose", 10);
         error_2d_pub_ = this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("error_2d", 10);
         error_yaw_pub_ = this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("error_yaw", 10);
-        current_localization_type_pub_ = this->create_publisher<tier4_debug_msgs::msg::StringStamped>("current_localization_type", 10);
+        current_localization_type_pub_ = this->create_publisher<tier4_localization_msgs::msg::LocalizationTypeStamped>("current_localization_type", 10);
 
-        area_localization_type_sub_ = this->create_subscription<tier4_debug_msgs::msg::StringStamped>(
+        area_localization_type_sub_ = this->create_subscription<tier4_localization_msgs::msg::LocalizationTypeStamped>(
             "area_localization_type",
             10,
-            [this](const tier4_debug_msgs::msg::StringStamped::SharedPtr msg) {
+            [this](const tier4_localization_msgs::msg::LocalizationTypeStamped::SharedPtr msg) {
                 area_localization_type_msg_ = *msg;
                 if(!is_initialized_) {
                     current_localization_type_msg_ = *msg;
@@ -42,14 +42,6 @@ public:
                 }
                 current_localization_type_pub_->publish(current_localization_type_msg_);
 
-                // Check failed switching
-                bool failed_switching = false;
-                failed_switching = ((current_localization_type_msg_.data == "gnss" && area_localization_type_msg_.data == "ndt") ||
-                                    (current_localization_type_msg_.data == "ndt" && area_localization_type_msg_.data == "gnss"));
-                if(failed_switching) {
-                    RCLCPP_WARN(this->get_logger(), "failed_switching");
-                    rclcpp::shutdown();
-                }
             });
 
         gnss_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -61,7 +53,7 @@ public:
                 }
                 gnss_pose_cov_msg_ptr_array_.push_back(msg);
 
-                if(current_localization_type_msg_.data == "gnss") {
+                if(current_localization_type_msg_.data == tier4_localization_msgs::msg::LocalizationTypeStamped::GNSS) {
                    pose_pub_->publish(*msg);
                 }
             });
@@ -70,43 +62,55 @@ public:
             "lidar_pose",
             10,
             [this](const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg) {
-              if(current_localization_type_msg_.data == "ndt") {
+                if(current_localization_type_msg_.data == tier4_localization_msgs::msg::LocalizationTypeStamped::NDT) {
                     pose_pub_->publish(*msg);
                 }
 
                 lidar_pose_msg_ptr_ = msg;
                 if(is_gnss_pose_received_) {
-                    Error2dYaw error_2d_yaw;
-                    if(!computeError(error_2d_yaw)) {
-                        // RCLCPP_WARN(this->get_logger(), "computeError() == false");
+                    double t = rclcpp::Time(area_localization_type_msg_.stamp).seconds() - 1.6843928e+09;
+                    // std::cout << "t: " << std::setprecision(9) << t << std::endl;
+                    // std::cout << "area_localization_type_msg_.data: " << area_localization_type_msg_.data << std::endl;
+                    // RCLCPP_INFO(this->get_logger(), "area_localization_type_msg_.data: %d", area_localization_type_msg_.data);
+                    if(is_switched_){
+                        if(area_localization_type_msg_.data != tier4_localization_msgs::msg::LocalizationTypeStamped::SWITCHING)
+                        {
+                            RCLCPP_INFO(this->get_logger(), "is_switched_ reset");
+                            is_switched_ = false;
+                        }
                         return;
                     }
 
-                    if(area_localization_type_msg_.data != "switching") {
-                        // RCLCPP_WARN(this->get_logger(), "area_localization_type_msg_.data != \"switching\"");
-                        is_switched_ = false;
-                        return;
+                    Error2dYaw error_2d_yaw;
+                    bool is_gnss_area = (area_localization_type_msg_.data == tier4_localization_msgs::msg::LocalizationTypeStamped::GNSS);
+                    if(!is_gnss_area) {
+                        if(!computeError(error_2d_yaw)) {
+                            // RCLCPP_WARN(this->get_logger(), "computeError() == false");
+                            return;
+                        }
                     }
-                    if(is_switched_)
+
+                    bool is_switching_area = (area_localization_type_msg_.data == tier4_localization_msgs::msg::LocalizationTypeStamped::SWITCHING);
+                    if(is_switching_area)
                     {
-                        // RCLCPP_WARN(this->get_logger(), "is_switched_ == true");
-                        return;
+                        if(!judgetSwitching(error_2d_yaw))
+                        {
+                            // RCLCPP_WARN(this->get_logger(), "judgetSwitching() == false");
+                            return;
+                        }
+                        else
+                        {
+                            is_switched_ = true;
+                            current_localization_type_msg_.stamp = area_localization_type_msg_.stamp;
+                            if(current_localization_type_msg_.data == tier4_localization_msgs::msg::LocalizationTypeStamped::GNSS) {
+                                current_localization_type_msg_.data = tier4_localization_msgs::msg::LocalizationTypeStamped::NDT;
+                            }
+                            else if(current_localization_type_msg_.data == tier4_localization_msgs::msg::LocalizationTypeStamped::NDT) {
+                                current_localization_type_msg_.data = tier4_localization_msgs::msg::LocalizationTypeStamped::SWITCHING;
+                            }
+                        }
                     }
-                    if(!judgetSwitching(error_2d_yaw)) {
-                        // RCLCPP_WARN(this->get_logger(), "judgetSwitching() == false");
-                        return;
-                    }
-                    else
-                    {
-                        is_switched_ = true;
-                        current_localization_type_msg_.stamp = area_localization_type_msg_.stamp;
-                       if(current_localization_type_msg_.data == "gnss") {
-                            current_localization_type_msg_.data = "ndt";
-                       }
-                       else if(current_localization_type_msg_.data == "ndt") {
-                            current_localization_type_msg_.data = "gnss";
-                       }
-                    }
+                    
                 std::cout << "-----------------" << std::endl;
                 }
 
@@ -214,11 +218,11 @@ private:
     }
 
     rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_pub_;
-    rclcpp::Publisher<tier4_debug_msgs::msg::StringStamped>::SharedPtr current_localization_type_pub_;
+    rclcpp::Publisher<tier4_localization_msgs::msg::LocalizationTypeStamped>::SharedPtr current_localization_type_pub_;
     rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr error_2d_pub_;
     rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr error_yaw_pub_;
 
-    rclcpp::Subscription<tier4_debug_msgs::msg::StringStamped>::SharedPtr area_localization_type_sub_;
+    rclcpp::Subscription<tier4_localization_msgs::msg::LocalizationTypeStamped>::SharedPtr area_localization_type_sub_;
     rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr gnss_pose_sub_;
     rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr lidar_pose_sub_;
 
@@ -234,7 +238,7 @@ private:
     double judge_switching_ealpsed_time_threshold_;
     double judge_switching_first_time_ = -1.0;
 
-    tier4_debug_msgs::msg::StringStamped current_localization_type_msg_, area_localization_type_msg_;
+    tier4_localization_msgs::msg::LocalizationTypeStamped current_localization_type_msg_, area_localization_type_msg_;
 
     bool is_initialized_ = false;
 
