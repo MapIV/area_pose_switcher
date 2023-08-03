@@ -106,12 +106,12 @@ public:
                                 current_localization_type_msg_.data = tier4_localization_msgs::msg::LocalizationTypeStamped::NDT;
                             }
                             else if(current_localization_type_msg_.data == tier4_localization_msgs::msg::LocalizationTypeStamped::NDT) {
-                                current_localization_type_msg_.data = tier4_localization_msgs::msg::LocalizationTypeStamped::SWITCHING;
+                                current_localization_type_msg_.data = tier4_localization_msgs::msg::LocalizationTypeStamped::GNSS;
                             }
                         }
                     }
-                    
-                std::cout << "-----------------" << std::endl;
+
+                // std::cout << "-----------------" << std::endl;
                 }
 
             });
