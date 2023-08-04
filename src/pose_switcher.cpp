@@ -42,6 +42,14 @@ public:
                 }
                 current_localization_type_pub_->publish(current_localization_type_msg_);
 
+                if(is_switched_){
+                    if(area_localization_type_msg_.data != tier4_localization_msgs::msg::LocalizationTypeStamped::SWITCHING)
+                    {
+                        RCLCPP_INFO(this->get_logger(), "is_switched_ reset");
+                        is_switched_ = false;
+                    }
+                }
+
             });
 
         gnss_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -73,11 +81,6 @@ public:
                     // std::cout << "area_localization_type_msg_.data: " << area_localization_type_msg_.data << std::endl;
                     // RCLCPP_INFO(this->get_logger(), "area_localization_type_msg_.data: %d", area_localization_type_msg_.data);
                     if(is_switched_){
-                        if(area_localization_type_msg_.data != tier4_localization_msgs::msg::LocalizationTypeStamped::SWITCHING)
-                        {
-                            RCLCPP_INFO(this->get_logger(), "is_switched_ reset");
-                            is_switched_ = false;
-                        }
                         return;
                     }
 
