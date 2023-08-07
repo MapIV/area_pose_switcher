@@ -60,6 +60,7 @@ public:
                     is_gnss_pose_received_ = true;
                 }
                 gnss_pose_cov_msg_ptr_array_.push_back(msg);
+                gnss_pose_msg_ptr_ = msg;
 
                 if(current_localization_type_msg_.data == tier4_localization_msgs::msg::LocalizationTypeStamped::GNSS) {
                    pose_pub_->publish(*msg);
@@ -74,6 +75,7 @@ public:
                     pose_pub_->publish(*msg);
                 }
 
+                lidar_pose_cov_msg_ptr_array_.push_back(msg);
                 lidar_pose_msg_ptr_ = msg;
                 if(is_gnss_pose_received_) {
                     double t = rclcpp::Time(area_localization_type_msg_.stamp).seconds() - 1.6843928e+09;
@@ -89,7 +91,7 @@ public:
                     bool is_gnss_area = (area_localization_type_msg_.data == tier4_localization_msgs::msg::LocalizationTypeStamped::GNSS);
                     if(!is_gnss_area) {
                         if(!computeError(error_2d_yaw)) {
-                            RCLCPP_WARN(this->get_logger(), "computeError() == false");
+                            // RCLCPP_WARN(this->get_logger(), "computeError() == false");
                             return;
                         }
                     }
@@ -172,11 +174,12 @@ private:
     }
 
     bool computeError(Error2dYaw& error_2d_yaw) {
-        rclcpp::Time sensor_ros_time =  lidar_pose_msg_ptr_->header.stamp;
-        if (gnss_pose_cov_msg_ptr_array_.size() <= 1) {
+        rclcpp::Time sensor_ros_time =  gnss_pose_msg_ptr_->header.stamp;
+        if (lidar_pose_cov_msg_ptr_array_.size() <= 1) {
+            RCLCPP_WARN(this->get_logger(), "lidar_pose_cov_msg_ptr_array_.size() <= 1");
             return false;
         }
-        PoseArrayInterpolator interpolator(this, sensor_ros_time, gnss_pose_cov_msg_ptr_array_);
+        PoseArrayInterpolator interpolator(this, sensor_ros_time, lidar_pose_cov_msg_ptr_array_);
         if (!interpolator.is_success())
         {
             RCLCPP_WARN(this->get_logger(), "interpolator.is_success() == false");
@@ -186,10 +189,12 @@ private:
             RCLCPP_WARN(this->get_logger(), "interpolator.get_current_pose().header.stamp == 0.0");
             return false;
         }
-        pop_old_pose(gnss_pose_cov_msg_ptr_array_, sensor_ros_time);
+        pop_old_pose(lidar_pose_cov_msg_ptr_array_, sensor_ros_time);
 
-        geometry_msgs::msg::Pose lidar_pose = lidar_pose_msg_ptr_->pose.pose;
-        geometry_msgs::msg::Pose gnss_pose = interpolator.get_current_pose().pose.pose;
+        // geometry_msgs::msg::Pose lidar_pose = lidar_pose_msg_ptr_->pose.pose;
+        // geometry_msgs::msg::Pose gnss_pose = interpolator.get_current_pose().pose.pose;
+        geometry_msgs::msg::Pose gnss_pose = lidar_pose_msg_ptr_->pose.pose;
+        geometry_msgs::msg::Pose lidar_pose = interpolator.get_current_pose().pose.pose;
         // 2D error
         double error_2d = sqrt(pow(gnss_pose.position.x - lidar_pose.position.x, 2) +
                                pow(gnss_pose.position.y - lidar_pose.position.y, 2));
@@ -237,7 +242,7 @@ private:
     bool is_gnss_pose_received_;
 
     std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr>
-    gnss_pose_cov_msg_ptr_array_;
+    gnss_pose_cov_msg_ptr_array_, lidar_pose_cov_msg_ptr_array_;
 
     double error_2d_threshold_, error_yaw_threshold_;
     double judge_switching_ealpsed_time_threshold_;
