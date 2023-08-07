@@ -29,7 +29,7 @@ public:
         pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("selected_pose", 10);
         error_2d_pub_ = this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("error_2d", 10);
         error_yaw_pub_ = this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("error_yaw", 10);
-        current_localization_type_pub_ = this->create_publisher<tier4_localization_msgs::msg::LocalizationTypeStamped>("current_localization_type", 10);
+        current_localization_type_pub_ = this->create_publisher<tier4_localization_msgs::msg::LocalizationTypeStamped>("/localization/pose_estimator/current_localization_type", 10);
 
         area_localization_type_sub_ = this->create_subscription<tier4_localization_msgs::msg::LocalizationTypeStamped>(
             "area_localization_type",
@@ -81,6 +81,7 @@ public:
                     // std::cout << "area_localization_type_msg_.data: " << area_localization_type_msg_.data << std::endl;
                     // RCLCPP_INFO(this->get_logger(), "area_localization_type_msg_.data: %d", area_localization_type_msg_.data);
                     if(is_switched_){
+                        // RCLCPP_INFO(this->get_logger(), "is_switched_ == true");
                         return;
                     }
 
@@ -88,7 +89,7 @@ public:
                     bool is_gnss_area = (area_localization_type_msg_.data == tier4_localization_msgs::msg::LocalizationTypeStamped::GNSS);
                     if(!is_gnss_area) {
                         if(!computeError(error_2d_yaw)) {
-                            // RCLCPP_WARN(this->get_logger(), "computeError() == false");
+                            RCLCPP_WARN(this->get_logger(), "computeError() == false");
                             return;
                         }
                     }
@@ -98,7 +99,7 @@ public:
                     {
                         if(!judgetSwitching(error_2d_yaw))
                         {
-                            // RCLCPP_WARN(this->get_logger(), "judgetSwitching() == false");
+                            RCLCPP_WARN(this->get_logger(), "judgetSwitching() == false");
                             return;
                         }
                         else
@@ -166,6 +167,7 @@ private:
             RCLCPP_INFO(this->get_logger(), "Switching!!!!!!!!!");
             return true;
         }
+        RCLCPP_INFO(this->get_logger(), "elapsed_time: %f", elapsed_time);
         return false;
     }
 
@@ -177,11 +179,11 @@ private:
         PoseArrayInterpolator interpolator(this, sensor_ros_time, gnss_pose_cov_msg_ptr_array_);
         if (!interpolator.is_success())
         {
-            // RCLCPP_WARN(this->get_logger(), "interpolator.is_success() == false");
+            RCLCPP_WARN(this->get_logger(), "interpolator.is_success() == false");
             return false;
         }
         if (rclcpp::Time(interpolator.get_current_pose().header.stamp).seconds() == 0.0) {
-            // RCLCPP_WARN(this->get_logger(), "interpolator.get_current_pose().header.stamp == 0.0");
+            RCLCPP_WARN(this->get_logger(), "interpolator.get_current_pose().header.stamp == 0.0");
             return false;
         }
         pop_old_pose(gnss_pose_cov_msg_ptr_array_, sensor_ros_time);
