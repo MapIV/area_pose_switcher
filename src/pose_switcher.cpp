@@ -26,18 +26,19 @@ public:
         this->get_parameter("error_yaw_threshold", error_yaw_threshold_);
         this->get_parameter("judge_switching_ealpsed_time_threshold", judge_switching_ealpsed_time_threshold_);
 
-        pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("selected_pose", 10);
-        error_2d_pub_ = this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("error_2d", 10);
-        error_yaw_pub_ = this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("error_yaw", 10);
-        current_localization_type_pub_ = this->create_publisher<tier4_localization_msgs::msg::LocalizationTypeStamped>("/localization/pose_estimator/current_localization_type", 10);
+        pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("selected_pose", 1);
+        error_2d_pub_ = this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("error_2d", 1);
+        error_yaw_pub_ = this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("error_yaw", 1);
+        current_localization_type_pub_ = this->create_publisher<tier4_localization_msgs::msg::LocalizationTypeStamped>("/localization/pose_estimator/current_localization_type", 1);
 
         area_localization_type_sub_ = this->create_subscription<tier4_localization_msgs::msg::LocalizationTypeStamped>(
             "area_localization_type",
-            10,
+            1,
             [this](const tier4_localization_msgs::msg::LocalizationTypeStamped::SharedPtr msg) {
                 area_localization_type_msg_ = *msg;
                 if(!is_initialized_) {
                     current_localization_type_msg_ = *msg;
+                    current_localization_type_msg_.data = tier4_localization_msgs::msg::LocalizationTypeStamped::NDT;
                     is_initialized_ = true;
                 }
                 current_localization_type_pub_->publish(current_localization_type_msg_);
@@ -54,7 +55,7 @@ public:
 
         gnss_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
             "gnss_pose",
-            10,
+            1,
             [this](const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg) {
                 if(!is_gnss_pose_received_) {
                     is_gnss_pose_received_ = true;
@@ -69,7 +70,7 @@ public:
 
         lidar_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
             "lidar_pose",
-            10,
+            1,
             [this](const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg) {
                 if(current_localization_type_msg_.data == tier4_localization_msgs::msg::LocalizationTypeStamped::NDT) {
                     pose_pub_->publish(*msg);
@@ -94,7 +95,15 @@ public:
                             // RCLCPP_WARN(this->get_logger(), "computeError() == false");
                             return;
                         }
+                        else
+                        {
+                            // RCLCPP_INFO(this->get_logger(), "computeError() == true");
+                        }
                     }
+                    // else
+                    // {
+                    //     RCLCPP_INFO(this->get_logger(), "is_gnss_area == true");
+                    // }
 
                     bool is_switching_area = (area_localization_type_msg_.data == tier4_localization_msgs::msg::LocalizationTypeStamped::SWITCHING);
                     if(is_switching_area)
@@ -160,13 +169,13 @@ private:
         }
         if (judge_switching_first_time_ < 0.0) {
             judge_switching_first_time_ = error_2d_yaw.time;
-            RCLCPP_INFO(this->get_logger(), "Start to judge switching");
+            RCLCPP_INFO(this->get_logger(), "Start to judge switching?");
             return false;
         }
         double elapsed_time = error_2d_yaw.time - judge_switching_first_time_;
         if (elapsed_time > judge_switching_ealpsed_time_threshold_) {
             judge_switching_first_time_ = -1.0;
-            RCLCPP_INFO(this->get_logger(), "Switching!!!!!!!!!");
+            RCLCPP_INFO(this->get_logger(), "Switching!");
             return true;
         }
         RCLCPP_INFO(this->get_logger(), "elapsed_time: %f", elapsed_time);
@@ -176,7 +185,7 @@ private:
     bool computeError(Error2dYaw& error_2d_yaw) {
         rclcpp::Time sensor_ros_time =  gnss_pose_msg_ptr_->header.stamp;
         if (lidar_pose_cov_msg_ptr_array_.size() <= 1) {
-            RCLCPP_WARN(this->get_logger(), "lidar_pose_cov_msg_ptr_array_.size() <= 1");
+            // RCLCPP_WARN(this->get_logger(), "lidar_pose_cov_msg_ptr_array_.size() <= 1");
             return false;
         }
         PoseArrayInterpolator interpolator(this, sensor_ros_time, lidar_pose_cov_msg_ptr_array_);
