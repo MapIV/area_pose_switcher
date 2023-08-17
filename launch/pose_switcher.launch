@@ -7,7 +7,7 @@
     <remap from="lidar_pose" to="/localization/pose_estimator/ndt_scan_matcher/pose_with_covariance"/>
     <param name="error_2d_threshold" value="0.2"/> <!-- [m] -->
     <param name="error_yaw_threshold" value="1.0"/> <!-- [deg] -->
-    <param name="judge_switching_ealpsed_time_threshold" value="3.0"/> <!-- [s] -->
+    <param name="judge_switching_ealpsed_time_threshold" value="2.0"/> <!-- [s] -->
   </node>
 
 </launch>
