@@ -37,7 +37,7 @@ The factor of 2 is a value chosen empirically.
 
 | Name | Type | Description |
 | - | - | - |
-| `area_localization_type"` | `tier4_localization_msgs::msg::LocalizationTypeStamped` | The type of localization which is available based on current pose. |
+| `area_localization_type"` | `map4_localization_msgs::msg::LocalizationTypeStamped` | The type of localization which is available based on current pose. |
 
 ## Parameters
 

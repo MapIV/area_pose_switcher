@@ -5,7 +5,7 @@
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2/LinearMath/Matrix3x3.h"
 #include "tier4_debug_msgs/msg/float32_stamped.hpp"
-#include "tier4_localization_msgs/msg/localization_type_stamped.hpp"
+#include "map4_localization_msgs/msg/localization_type_stamped.hpp"
 
 #include <deque>
 
@@ -29,22 +29,22 @@ public:
         pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("selected_pose", 1);
         error_2d_pub_ = this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("error_2d", 1);
         error_yaw_pub_ = this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("error_yaw", 1);
-        current_localization_type_pub_ = this->create_publisher<tier4_localization_msgs::msg::LocalizationTypeStamped>("/localization/pose_estimator/current_localization_type", 1);
+        current_localization_type_pub_ = this->create_publisher<map4_localization_msgs::msg::LocalizationTypeStamped>("/localization/pose_estimator/current_localization_type", 1);
 
-        area_localization_type_sub_ = this->create_subscription<tier4_localization_msgs::msg::LocalizationTypeStamped>(
+        area_localization_type_sub_ = this->create_subscription<map4_localization_msgs::msg::LocalizationTypeStamped>(
             "area_localization_type",
             1,
-            [this](const tier4_localization_msgs::msg::LocalizationTypeStamped::SharedPtr msg) {
+            [this](const map4_localization_msgs::msg::LocalizationTypeStamped::SharedPtr msg) {
                 area_localization_type_msg_ = *msg;
                 if(!is_initialized_) {
                     current_localization_type_msg_ = *msg;
-                    current_localization_type_msg_.data = tier4_localization_msgs::msg::LocalizationTypeStamped::NDT;
+                    current_localization_type_msg_.data = map4_localization_msgs::msg::LocalizationTypeStamped::NDT;
                     is_initialized_ = true;
                 }
                 current_localization_type_pub_->publish(current_localization_type_msg_);
 
                 if(is_switched_){
-                    if(area_localization_type_msg_.data != tier4_localization_msgs::msg::LocalizationTypeStamped::SWITCHING)
+                    if(area_localization_type_msg_.data != map4_localization_msgs::msg::LocalizationTypeStamped::SWITCHING)
                     {
                         RCLCPP_INFO(this->get_logger(), "is_switched_ reset");
                         is_switched_ = false;
@@ -63,7 +63,7 @@ public:
                 gnss_pose_cov_msg_ptr_array_.push_back(msg);
                 gnss_pose_msg_ptr_ = msg;
 
-                if(current_localization_type_msg_.data == tier4_localization_msgs::msg::LocalizationTypeStamped::GNSS) {
+                if(current_localization_type_msg_.data == map4_localization_msgs::msg::LocalizationTypeStamped::GNSS) {
                    pose_pub_->publish(*msg);
                 }
             });
@@ -72,7 +72,7 @@ public:
             "lidar_pose",
             1,
             [this](const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg) {
-                if(current_localization_type_msg_.data == tier4_localization_msgs::msg::LocalizationTypeStamped::NDT) {
+                if(current_localization_type_msg_.data == map4_localization_msgs::msg::LocalizationTypeStamped::NDT) {
                     pose_pub_->publish(*msg);
                 }
 
@@ -89,7 +89,7 @@ public:
                     }
 
                     Error2dYaw error_2d_yaw;
-                    bool is_gnss_area = (area_localization_type_msg_.data == tier4_localization_msgs::msg::LocalizationTypeStamped::GNSS);
+                    bool is_gnss_area = (area_localization_type_msg_.data == map4_localization_msgs::msg::LocalizationTypeStamped::GNSS);
                     if(!is_gnss_area) {
                         if(!computeError(error_2d_yaw)) {
                             // RCLCPP_WARN(this->get_logger(), "computeError() == false");
@@ -105,7 +105,7 @@ public:
                     //     RCLCPP_INFO(this->get_logger(), "is_gnss_area == true");
                     // }
 
-                    bool is_switching_area = (area_localization_type_msg_.data == tier4_localization_msgs::msg::LocalizationTypeStamped::SWITCHING);
+                    bool is_switching_area = (area_localization_type_msg_.data == map4_localization_msgs::msg::LocalizationTypeStamped::SWITCHING);
                     if(is_switching_area)
                     {
                         if(!judgetSwitching(error_2d_yaw))
@@ -117,11 +117,11 @@ public:
                         {
                             is_switched_ = true;
                             current_localization_type_msg_.stamp = area_localization_type_msg_.stamp;
-                            if(current_localization_type_msg_.data == tier4_localization_msgs::msg::LocalizationTypeStamped::GNSS) {
-                                current_localization_type_msg_.data = tier4_localization_msgs::msg::LocalizationTypeStamped::NDT;
+                            if(current_localization_type_msg_.data == map4_localization_msgs::msg::LocalizationTypeStamped::GNSS) {
+                                current_localization_type_msg_.data = map4_localization_msgs::msg::LocalizationTypeStamped::NDT;
                             }
-                            else if(current_localization_type_msg_.data == tier4_localization_msgs::msg::LocalizationTypeStamped::NDT) {
-                                current_localization_type_msg_.data = tier4_localization_msgs::msg::LocalizationTypeStamped::GNSS;
+                            else if(current_localization_type_msg_.data == map4_localization_msgs::msg::LocalizationTypeStamped::NDT) {
+                                current_localization_type_msg_.data = map4_localization_msgs::msg::LocalizationTypeStamped::GNSS;
                             }
                         }
                     }
@@ -237,11 +237,11 @@ private:
     }
 
     rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_pub_;
-    rclcpp::Publisher<tier4_localization_msgs::msg::LocalizationTypeStamped>::SharedPtr current_localization_type_pub_;
+    rclcpp::Publisher<map4_localization_msgs::msg::LocalizationTypeStamped>::SharedPtr current_localization_type_pub_;
     rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr error_2d_pub_;
     rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr error_yaw_pub_;
 
-    rclcpp::Subscription<tier4_localization_msgs::msg::LocalizationTypeStamped>::SharedPtr area_localization_type_sub_;
+    rclcpp::Subscription<map4_localization_msgs::msg::LocalizationTypeStamped>::SharedPtr area_localization_type_sub_;
     rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr gnss_pose_sub_;
     rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr lidar_pose_sub_;
 
@@ -257,7 +257,7 @@ private:
     double judge_switching_ealpsed_time_threshold_;
     double judge_switching_first_time_ = -1.0;
 
-    tier4_localization_msgs::msg::LocalizationTypeStamped current_localization_type_msg_, area_localization_type_msg_;
+    map4_localization_msgs::msg::LocalizationTypeStamped current_localization_type_msg_, area_localization_type_msg_;
 
     bool is_initialized_ = false;
 

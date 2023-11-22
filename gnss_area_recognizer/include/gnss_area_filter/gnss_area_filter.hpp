@@ -28,7 +28,7 @@
 #include "lanelet2_extension/utility/utilities.hpp"
 
 #include "autoware_auto_mapping_msgs/msg/had_map_bin.hpp"
-#include "tier4_localization_msgs/msg/localization_type_stamped.hpp"
+#include "map4_localization_msgs/msg/localization_type_stamped.hpp"
 
 class GNSSAreaFilter : public rclcpp::Node
 {
@@ -46,7 +46,7 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_sub_;
 
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_pub_;
-  rclcpp::Publisher<tier4_localization_msgs::msg::LocalizationTypeStamped>::SharedPtr area_localization_type_pub_;
+  rclcpp::Publisher<map4_localization_msgs::msg::LocalizationTypeStamped>::SharedPtr area_localization_type_pub_;
 
   std::string polygon_tag_name_, polygon_tag_name2_;
   std::optional<lanelet::ConstPolygons3d> gnss_available_areas_opt_, switching_areas_opt_;

@@ -32,7 +32,7 @@ GNSSAreaFilter::GNSSAreaFilter()
     "input_pose_with_covariance_topic", 10,
     std::bind(&GNSSAreaFilter::onPose, this, std::placeholders::_1));
 
-  area_localization_type_pub_ = this->create_publisher<tier4_localization_msgs::msg::LocalizationTypeStamped>(
+  area_localization_type_pub_ = this->create_publisher<map4_localization_msgs::msg::LocalizationTypeStamped>(
     "area_localization_type", 10);
 }
 
@@ -64,16 +64,16 @@ void GNSSAreaFilter::onPose(
     return;
   }
 
-  tier4_localization_msgs::msg::LocalizationTypeStamped area_localization_type{};
+  map4_localization_msgs::msg::LocalizationTypeStamped area_localization_type{};
   if (GNSSAreaFilter::poseExistsInGNSSAvailableArea(*pose, gnss_available_areas_opt_.value())) {
-    area_localization_type.data = tier4_localization_msgs::msg::LocalizationTypeStamped::GNSS;
+    area_localization_type.data = map4_localization_msgs::msg::LocalizationTypeStamped::GNSS;
   }
   else if (GNSSAreaFilter::poseExistsInGNSSAvailableArea(*pose, switching_areas_opt_.value())) {
-    area_localization_type.data = tier4_localization_msgs::msg::LocalizationTypeStamped::SWITCHING;
+    area_localization_type.data = map4_localization_msgs::msg::LocalizationTypeStamped::SWITCHING;
   }
   else
   {
-    area_localization_type.data = tier4_localization_msgs::msg::LocalizationTypeStamped::NDT;
+    area_localization_type.data = map4_localization_msgs::msg::LocalizationTypeStamped::NDT;
   }
   area_localization_type.stamp = pose->header.stamp;
   count_++;

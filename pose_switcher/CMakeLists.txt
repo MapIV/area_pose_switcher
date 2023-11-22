@@ -20,7 +20,7 @@ find_package(tf2_eigen REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(tier4_debug_msgs REQUIRED)
-find_package(tier4_localization_msgs REQUIRED)
+find_package(map4_localization_msgs REQUIRED)
 # find_package(ndt_scan_matcher REQUIRED)
 
 # ndt_scan_matcher
@@ -35,7 +35,7 @@ add_executable(pose_switcher
 )
 
 # Specify libraries to link a library or executable target against
-ament_target_dependencies(pose_switcher rclcpp std_msgs geometry_msgs tf2_ros tf2_eigen tf2_geometry_msgs std_msgs tier4_debug_msgs tier4_localization_msgs)
+ament_target_dependencies(pose_switcher rclcpp std_msgs geometry_msgs tf2_ros tf2_eigen tf2_geometry_msgs std_msgs tier4_debug_msgs map4_localization_msgs)
 
 install(TARGETS
   pose_switcher

@@ -10,7 +10,7 @@
 
   <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
-  <depend>tier4_localization_msgs</depend>
+  <depend>map4_localization_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

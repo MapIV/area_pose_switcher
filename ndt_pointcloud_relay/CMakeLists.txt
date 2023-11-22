@@ -14,7 +14,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(tier4_localization_msgs REQUIRED)
+find_package(map4_localization_msgs REQUIRED)
 
 # Declare a C++ executable
 add_executable(pointcloud_relay_node src/pointcloud_relay.cpp)
@@ -23,7 +23,7 @@ add_executable(pointcloud_relay_node src/pointcloud_relay.cpp)
 ament_target_dependencies(pointcloud_relay_node
   rclcpp
   sensor_msgs
-  tier4_localization_msgs)
+  map4_localization_msgs)
 
 install(TARGETS
   pointcloud_relay_node

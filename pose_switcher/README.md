@@ -22,14 +22,14 @@ Package for switching the pose to be entered in ekf of autoware.universe
 | - | - | - |
 | `gnss_pose` | `geometry_msgs::PoseWithCovarianceStamped` | Pose topic from gnss. |
 | `lidar_pose` | `geometry_msgs::PoseWithCovarianceStamped` | Pose topic from lidar based localization. |
-| `localization_type` | `tier4_localization_msgs::LocalizationTypeStamped` | The type of localization that should be selected. |
+| `localization_type` | `map4_localization_msgs::LocalizationTypeStamped` | The type of localization that should be selected. |
 
 ### Output
 
 | Name | Type | Description |
 | - | - | - |
 | `selected_pose` | `geometry_msgs::PoseWithCovarianceStamped` | Pose topic from gnss:This topic is not published out of gnss available area.|
-| `current_localization_type"` | `tier4_localization_msgs::LocalizationTypeStamped` | The selected type of localization. |
+| `current_localization_type"` | `map4_localization_msgs::LocalizationTypeStamped` | The selected type of localization. |
 
 ## Parameters
 
