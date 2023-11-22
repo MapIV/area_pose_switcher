@@ -18,7 +18,7 @@ The `PointCloudRelay` node subscribes to the Point Cloud data topic and a locali
 
 ## Dependencies
 
-- `map4_localization_msgs`: Custom message package for localization type.
+- `tier4_localization_msgs`: Custom message package for localization type.
 
 ## Usage
 
