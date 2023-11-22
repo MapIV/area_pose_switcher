@@ -1,0 +1,5 @@
+/**:
+  ros__parameters:
+
+    polygon_tag_name: "gnss_available_area"
+    polygon_tag_name2: "switching_area"
