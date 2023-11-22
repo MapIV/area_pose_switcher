@@ -1,0 +1,3 @@
+polygon_tag_name: "gnss_available_area"
+type_of_localization_in_area: "GNSS"
+type_of_localization_out_of_area: "NDT"
