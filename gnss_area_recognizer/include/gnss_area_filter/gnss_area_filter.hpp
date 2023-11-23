@@ -25,6 +25,7 @@
 #include "geometry_msgs/msg/polygon.hpp"
 #include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 
+#include <lanelet2_core/LaneletMap.h>
 #include "lanelet2_extension/utility/utilities.hpp"
 
 #include "autoware_auto_mapping_msgs/msg/had_map_bin.hpp"
