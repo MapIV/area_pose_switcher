@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ros/ros.h>
 #include <memory>
-#include "rclcpp/rclcpp.hpp"
 
-#include "gnss_area_filter/gnss_area_filter.hpp"
+#include <gnss_area_recognizer/gnss_area_recognizer.hpp>
 
 int main(int argc, char ** argv)
 {
-  rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<GNSSAreaFilter>());
-  rclcpp::shutdown();
+  ros::init(argc, argv, "gnss_area_recognizer");
+  GNSSAreaRecognizer gnss_area_recog;
+  ros::spin();
+
   return 0;
 }

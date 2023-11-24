@@ -1,25 +1,26 @@
 <?xml version="1.0"?>
-<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
-<package format="3">
-  <name>gnss_area_filter</name>
+<package>
+  <name>gnss_area_recognizer</name>
   <version>0.1.0</version>
-  <description>The gnss_area_filter package</description>
+  <description>The gnss_area_recognizer package</description>
   <maintainer email="hironari.yashiro@tier4.jp">Hironari Yashiro</maintainer>
   <license>Apache License 2.0</license>
 
-  <buildtool_depend>ament_cmake_auto</buildtool_depend>
+  <buildtool_depend>catkin</buildtool_depend>
 
-  <depend>rclcpp</depend>
-  <depend>lanelet2_extension</depend>
-  <depend>geometry_msgs</depend>
-  <depend>autoware_auto_mapping_msgs</depend>
-  <depend>map4_localization_msgs</depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>autoware_lanelet2_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>lanelet2_extension</build_depend>
 
-  <test_depend>ament_lint_auto</test_depend>
-  <test_depend>ament_lint_common</test_depend>
-  <test_depend>ament_cmake_cppcheck</test_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>autoware_lanelet2_msgs</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>lanelet2_extension</run_depend>
+
 
   <export>
-    <build_type>ament_cmake</build_type>
   </export>
 </package>

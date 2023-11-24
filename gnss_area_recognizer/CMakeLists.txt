@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.5)
-project(gnss_area_filter)
+cmake_minimum_required(VERSION 3.0.2)
+project(gnss_area_recognizer)
 
 ### Compile options
 if(NOT CMAKE_CXX_STANDARD)
@@ -13,36 +13,46 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 ### Dependencies
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
+  std_msgs
+  geometry_msgs
+  autoware_lanelet2_msgs
+  lanelet2_extension
+)
 
-ament_auto_add_executable(${PROJECT_NAME}
+catkin_package(
+  INCLUDE_DIRS include
+)
+
+include_directories(include ${catkin_INCLUDE_DIRS})
+
+add_executable(${PROJECT_NAME}
   src/${PROJECT_NAME}.cpp
   src/${PROJECT_NAME}_node.cpp
 )
-target_link_libraries(${PROJECT_NAME})
 
-ament_auto_add_library(lib_${PROJECT_NAME} SHARED
-  src/${PROJECT_NAME}.cpp
+add_dependencies(${PROJECT_NAME}
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
 )
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
-  find_package(ament_cmake_gtest REQUIRED)
+install(TARGETS
+  gnss_area_recognizer
+  DESTINATION lib/${PROJECT_NAME}
+)
 
-  file(GLOB_RECURSE test_files test/**/*.cpp)
-
-  ament_add_gtest(test_${PROJECT_NAME} ${test_files})
-
-  target_link_libraries(test_${PROJECT_NAME}
-    lib_${PROJECT_NAME}
-  )
-endif()
-
-ament_auto_package(
-  INSTALL_TO_SHARE
+install(
+  DIRECTORY
     launch
     config
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+
+# ament_auto_package(
+#   INSTALL_TO_SHARE
+#     launch
+#     config
+# )

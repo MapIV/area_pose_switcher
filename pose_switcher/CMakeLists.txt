@@ -1,50 +1,46 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.0.2)
 project(pose_switcher)
 
-# Default to C++14
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-endif()
+## Compile as C++11, supported in ROS Kinetic and newer
+add_compile_options(-std=c++11)
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
+find_package(catkin REQUIRED COMPONENTS
+  geometry_msgs
+  roscpp
+)
 
-# Find dependencies
-find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(geometry_msgs REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(tf2_ros REQUIRED)
-find_package(tf2_eigen REQUIRED)
-find_package(tf2_geometry_msgs REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(tier4_debug_msgs REQUIRED)
-find_package(map4_localization_msgs REQUIRED)
-# find_package(ndt_scan_matcher REQUIRED)
+catkin_package(
+#  INCLUDE_DIRS include
+#  LIBRARIES pose_switcher
+#  CATKIN_DEPENDS geometry_msgs roscpp
+#  DEPENDS system_lib
+)
 
-# ndt_scan_matcher
+###########
+## Build ##
+###########
+
+## Specify additional locations of header files
+## Your package locations should be listed before other locations
 include_directories(
-    include
-)
-# Declare a C++ executable
-add_executable(pose_switcher
-  src/pose_switcher.cpp
-  src/util_func.cpp
-  src/pose_array_interpolator.cpp
+  include
+  ${catkin_INCLUDE_DIRS}
 )
 
-# Specify libraries to link a library or executable target against
-ament_target_dependencies(pose_switcher rclcpp std_msgs geometry_msgs tf2_ros tf2_eigen tf2_geometry_msgs std_msgs tier4_debug_msgs map4_localization_msgs)
+
+add_executable(pose_switcher
+src/pose_switcher_node.cpp
+src/pose_switcher.cpp)
+add_dependencies(pose_switcher ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(pose_switcher ${catkin_LIBRARIES})
 
 install(TARGETS
-  pose_switcher
-  DESTINATION lib/${PROJECT_NAME})
-
-install(DIRECTORY
-  launch
-  DESTINATION share/${PROJECT_NAME}
+ pose_switcher
+ DESTINATION lib/${PROJECT_NAME}
 )
 
-# Exporting dependencies and setup for ament
-ament_package()
+install(DIRECTORY
+            launch
+          DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+        )
+
